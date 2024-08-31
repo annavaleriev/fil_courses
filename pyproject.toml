@@ -11,6 +11,7 @@ django = "^5.1"
 psycopg2-binary = "^2.9.9"
 pillow = "^10.4.0"
 djangorestframework = "^3.15.2"
+python-dotenv = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.1.1"
