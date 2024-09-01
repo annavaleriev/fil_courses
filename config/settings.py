@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users',
-
+    'materials',
     'rest_framework',
 ]
 
@@ -142,7 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# AUTH_USER_MODEL = "users.User"
+AUTH_USER_MODEL = "users.User"
 
 
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -155,8 +155,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 #
 # SERVER_EMAIL = EMAIL_HOST_USER
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-#
-# AUTH_USER_MODEL = "users.User"
 #
 # LOGIN_REDIRECT_URL = reverse_lazy("services:home")
 # LOGOUT_REDIRECT_URL = reverse_lazy("user:login")
