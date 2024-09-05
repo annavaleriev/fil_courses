@@ -12,7 +12,7 @@ class Course(models.Model):
         help_text="Введите название курса",
     )
     description = models.TextField(
-        verbose_name="Описание курса", **NULLABLE, help_text="Введите описание курса"
+        verbose_name="Описание курса", blank=True, help_text="Введите описание курса"
     )
     preview = models.ImageField(
         upload_to="course/",
@@ -39,7 +39,7 @@ class Lesson(models.Model):
         help_text="Введите название урока",
     )
     description = models.TextField(
-        verbose_name="Описание урока", **NULLABLE, help_text="Введите описание урока"
+        verbose_name="Описание урока", blank=True, help_text="Введите описание урока"
     )
     course = models.ForeignKey(
         Course,
@@ -48,22 +48,20 @@ class Lesson(models.Model):
         related_name="lessons",
         help_text="Выберите курс",
     )
-    preview = (
-        models.ImageField(
-            upload_to="lesson/",
-            verbose_name="Превью урока",
-            **NULLABLE,
-            help_text="Загрузите превью урока",
-        ),
+    preview = models.ImageField(
+        upload_to="lesson/",
+        verbose_name="Превью урока",
+        **NULLABLE,
+        help_text="Загрузите превью урока",
     )
     video = models.URLField(
         verbose_name="Видео урока", help_text="Введите ссылку на видео урока"
     )
 
+    def __str__(self):
+        return f"Урок {self.title} из курса {self.course.title}"
+
     class Meta:
         verbose_name = "Урок"
         verbose_name_plural = "Уроки"
         ordering = ["title"]
-
-    def __str__(self):
-        return f"Урок {self.title} из курса {self.course.title}"

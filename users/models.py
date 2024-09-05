@@ -103,3 +103,47 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"Пользователь {self.email} {self.phone or ''}"
+
+
+class Payment(models.Model):
+    """Модель для платежей"""
+
+    class Method(models.TextChoices):
+        CASH = "cash", "Наличные"
+        CARD = "card", "Перевод на счет"
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,  # удаление пользователя не приведет к удалению платежа
+        **NULLABLE,
+        verbose_name="Пользователь",
+    )
+    payment_date = models.DateTimeField(auto_now_add=True, verbose_name="Дата платежа")
+
+    paid_course = models.ForeignKey(
+        "materials.Course",
+        **NULLABLE,
+        on_delete=models.SET_NULL,  # удаление курса не приведет к удалению платежа
+        verbose_name="Оплаченный курс",
+    )
+
+    paid_lesson = models.ForeignKey(
+        "materials.Lesson",
+        **NULLABLE,
+        on_delete=models.SET_NULL,  # удаление урока не приведет к удалению платежа
+        verbose_name="Оплаченный урок",
+    )
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Сумма")
+
+    payment_method = models.CharField(
+        max_length=10, choices=Method.choices, verbose_name="Способ оплаты"
+    )
+
+    class Meta:
+        verbose_name = "Платеж"
+        verbose_name_plural = "Платежи"
+        ordering = ["-payment_date"]  # Сортировка по убыванию даты платежа
+
+    def __str__(self):
+        return f"Платеж {self.amount} от {self.user.email}"

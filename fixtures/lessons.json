@@ -1,0 +1,35 @@
+[
+    {
+        "model": "materials.lesson",
+        "pk": 1,
+        "fields": {
+            "title": "Введение в Python",
+            "description": "Знакомство с основными концепциями языка Python.",
+            "course": 3,
+            "preview": null,
+            "video": "https://example.com"
+        }
+    },
+    {
+        "model": "materials.lesson",
+        "pk": 2,
+        "fields": {
+            "title": "Установка и настройка Django",
+            "description": "Как установить и настроить Django для вашего проекта.",
+            "course": 1,
+            "preview": null,
+            "video": "https://example.com"
+        }
+    },
+    {
+        "model": "materials.lesson",
+        "pk": 1,
+        "fields": {
+            "title": "Циклы и условия в Python",
+            "description": "Урок по изучению циклов и условных операторов в Python.",
+            "course": 2,
+            "preview": null,
+            "video": "https://example.com"
+        }
+    }
+]
