@@ -69,26 +69,20 @@ class User(AbstractUser):
     email = models.EmailField(
         unique=True, verbose_name="Почта", help_text="Введите адрес электронной почты"
     )
-    phone = (
-        models.CharField(
-            max_length=150,
-            verbose_name="Телефон",
-            **NULLABLE,
-            help_text="Введите номер телефона",
-        ),
+    phone = models.CharField(
+        max_length=150,
+        verbose_name="Телефон",
+        **NULLABLE,
+        help_text="Введите номер телефона",
     )
-    city = (
-        models.CharField(
-            max_length=150, verbose_name="Город", **NULLABLE, help_text="Введите город"
-        ),
+    city = models.CharField(
+        max_length=150, verbose_name="Город", **NULLABLE, help_text="Введите город"
     )
-    avatar = (
-        models.ImageField(
-            upload_to="users/",
-            verbose_name="Аватар",
-            **NULLABLE,
-            help_text="Загрузите аватар",
-        ),
+    avatar = models.ImageField(
+        upload_to="users/",
+        verbose_name="Аватар",
+        **NULLABLE,
+        help_text="Загрузите аватар",
     )
 
     USERNAME_FIELD = "email"

@@ -1,15 +1,33 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from users.filters import PaymentFilter
 from users.models import User, Payment
 from users.serializer import UserSerializer, PaymentSerializer
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class UserViewSet(viewsets.ModelViewSet):  # Создаем ViewSet для пользователей
+    queryset = User.objects.all()  # Получаем всех пользователей
+    serializer_class = UserSerializer  # Используем сериализатор
+    permission_classes = [
+        IsAuthenticated
+    ]  # Устанавливаем права доступа только для авторизованных пользователей
+
+
+class UserCreateView(generics.CreateAPIView):  # Создаем View для создания пользователя
+    queryset = User.objects.all()  # Получаем всех пользователей
+    serializer_class = UserSerializer  # Используем сериализатор
+    # permission_classes = [AllowAny] # Устанавливаем права доступа для всех пользователей
+    permission_classes = (
+        AllowAny,
+    )  # Устанавливаем права доступа для всех пользователей
+
+    def perform_create(self, serializer):
+        user = serializer.save(is_active=True)  # Создаем пользователя
+        user.set_password(user.password)  # Хешируем пароль
+        user.save()
 
 
 class PaymentListView(generics.ListAPIView):

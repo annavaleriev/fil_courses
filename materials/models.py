@@ -1,5 +1,7 @@
 from django.db import models
 
+from users.models import User
+
 NULLABLE = {"blank": True, "null": True}
 
 
@@ -19,6 +21,14 @@ class Course(models.Model):
         verbose_name="Превью курса",
         **NULLABLE,
         help_text="Загрузите превью курса",
+    )
+
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        **NULLABLE,
+        verbose_name="Владелец",
+        help_text="Укажите владельца курса",
     )
 
     class Meta:
@@ -56,6 +66,13 @@ class Lesson(models.Model):
     )
     video = models.URLField(
         verbose_name="Видео урока", help_text="Введите ссылку на видео урока"
+    )
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        **NULLABLE,
+        verbose_name="Владелец",
+        help_text="Укажите владельца урока",
     )
 
     def __str__(self):

@@ -6,6 +6,8 @@ from materials.models import Course, Lesson
 class LessonSerializer(serializers.ModelSerializer):
     """Сериализатор для уроков"""
 
+    owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = Lesson
         fields = "__all__"
@@ -14,6 +16,7 @@ class LessonSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     """Сериализатор для курсов"""
 
+    owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
     lesson_count = (
         serializers.SerializerMethodField()
     )  # Добавляем поле с количеством уроков
