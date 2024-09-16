@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.permissions import AllowAny
 from rest_framework.routers import DefaultRouter
 
-from users.views import UserViewSet, PaymentListView, UserCreateView
+from users.views import UserViewSet, PaymentListView, UserCreateView, SubscriptionView
 from users.apps import UsersConfig
 
 from rest_framework_simplejwt.views import (
@@ -24,4 +24,5 @@ urlpatterns = [
     ),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("register/", UserCreateView.as_view(), name="register"),
+    path("subscription/<int:course_id>/", SubscriptionView.as_view(), name="subscription"),
 ] + router.urls

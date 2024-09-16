@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from materials.models import Course, Lesson
+from materials.paginators import LessonAndCoursePagination
 from materials.serializer import CourseSerializer, LessonSerializer
 from users.permissions import IsModer, IsOwner, IsSuperUser
 
@@ -34,8 +35,10 @@ class CourseLessonBasePermissionViewSet(viewsets.ModelViewSet):
 class CourseViewSet(CourseLessonBasePermissionViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
+    pagination_class = LessonAndCoursePagination
 
 
 class LessonViewSet(CourseLessonBasePermissionViewSet):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
+    pagination_class = LessonAndCoursePagination

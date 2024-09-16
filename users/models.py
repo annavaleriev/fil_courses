@@ -141,3 +141,28 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Платеж {self.amount} от {self.user.email}"
+
+
+class UserSubscription(models.Model):
+    """Модель для подписок пользователей"""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,  # удаление пользователя приведет к удалению подписки
+        verbose_name="Пользователь",
+    )
+    course = models.ForeignKey(
+        "materials.Course",
+        on_delete=models.CASCADE,  # удаление курса приведет к удалению подписки
+        verbose_name="Курс",
+    )
+    start_date_subscription = models.DateTimeField(auto_now_add=True, verbose_name="Дата начала на подписку")
+
+    class Meta:
+        verbose_name = "Подписка пользователя"
+        verbose_name_plural = "Подписки пользователей"
+        unique_together = ["user", "course"]  # Уникальность по пользователю и курсу
+        ordering = ["-start_date_subscription"]  # Сортировка по убыванию даты начала
+
+    def __str__(self):
+        return f"Подписка {self.user.email} подписан на {self.course.title}"

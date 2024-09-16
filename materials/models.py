@@ -1,5 +1,6 @@
 from django.db import models
 
+from materials.validators import validate_admin_youtube_link
 from users.models import User
 
 NULLABLE = {"blank": True, "null": True}
@@ -65,7 +66,7 @@ class Lesson(models.Model):
         help_text="Загрузите превью урока",
     )
     video = models.URLField(
-        verbose_name="Видео урока", help_text="Введите ссылку на видео урока"
+        verbose_name="Видео урока", help_text="Введите ссылку на видео урока", validators=[validate_admin_youtube_link]
     )
     owner = models.ForeignKey(
         User,
