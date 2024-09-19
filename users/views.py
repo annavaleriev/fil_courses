@@ -1,14 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, generics, status
+from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from materials.models import Course
+
 from users.filters import PaymentFilter
-from users.models import User, Payment, UserSubscription
+from users.models import User, Payment
 from users.serializer import UserSerializer, PaymentSerializer
 
 
@@ -51,30 +48,30 @@ class PaymentListView(generics.ListAPIView):
     ordering = ["-payment_date"]  # Сортируем по убыванию даты платежа
 
 
-class SubscriptionView(APIView):
-    """Подписка на курс"""
-    permission_classes = [IsAuthenticated]  # Устанавливаем права доступа только для авторизованных пользователей
-
-    @staticmethod
-    def post(request, course_id):
-        user = request.user  # Получаем пользователя
-        course = get_object_or_404(Course, id=course_id)  # Получаем курс
-        if UserSubscription.objects.filter(user=user,
-                                           course=course).exists():  # Проверяем, подписан ли пользователь на курс
-            return Response({"message": "Вы уже подписаны на курс"},
-                            status=status.HTTP_400_BAD_REQUEST)  # Выводим ошибку
-        UserSubscription.objects.create(user=user, course=course)  # Создаем подписку
-        return Response({"message": "Вы успешно подписались на курс"},
-                        status=status.HTTP_201_CREATED)  # Выводим сообщение об успешной подписке
-
-    @staticmethod
-    def delete(request, course_id):
-        user = request.user
-        course = get_object_or_404(Course, id=course_id)
-
-        subscription = UserSubscription.objects.filter(user=user, course=course)
-        if subscription.exists():
-            subscription.delete()
-            return Response({"message": "Ваша подписка на курс успешно отменена"},
-                            status=status.HTTP_204_NO_CONTENT)
-        return Response({"message": "Вы не подписаны на курс"})
+# class SubscriptionView(APIView):
+#     """Подписка на курс"""
+#     permission_classes = [IsAuthenticated]  # Устанавливаем права доступа только для авторизованных пользователей
+#
+#     @staticmethod
+#     def post(request, course_id):
+#         user = request.user  # Получаем пользователя
+#         course = get_object_or_404(Course, id=course_id)  # Получаем курс
+#         if UserSubscription.objects.filter(user=user,
+#                                            course=course).exists():  # Проверяем, подписан ли пользователь на курс
+#             return Response({"message": "Вы уже подписаны на курс"},
+#                             status=status.HTTP_400_BAD_REQUEST)  # Выводим ошибку
+#         UserSubscription.objects.create(user=user, course=course)  # Создаем подписку
+#         return Response({"message": "Вы успешно подписались на курс"},
+#                         status=status.HTTP_201_CREATED)  # Выводим сообщение об успешной подписке
+#
+#     @staticmethod
+#     def delete(request, course_id):
+#         user = request.user
+#         course = get_object_or_404(Course, id=course_id)
+#
+#         subscription = UserSubscription.objects.filter(user=user, course=course)
+#         if subscription.exists():
+#             subscription.delete()
+#             return Response({"message": "Ваша подписка на курс успешно отменена"},
+#                             status=status.HTTP_204_NO_CONTENT)
+#         return Response({"message": "Вы не подписаны на курс"})

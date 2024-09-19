@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from materials.serializer import CourseSerializer, LessonSerializer
-from users.models import User, Payment
+from users.models import User, Payment, UserSubscription
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -19,3 +19,11 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = "__all__"
+
+
+class UserSubscriptionSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = UserSubscription
+        fields = ("user", "course")

@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 NULLABLE = {"blank": True, "null": True}
+MODER_GROUP_NAME = "moders"
 
 
 class UserManager(BaseUserManager):
@@ -156,7 +157,9 @@ class UserSubscription(models.Model):
         on_delete=models.CASCADE,  # удаление курса приведет к удалению подписки
         verbose_name="Курс",
     )
-    start_date_subscription = models.DateTimeField(auto_now_add=True, verbose_name="Дата начала на подписку")
+    start_date_subscription = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата начала на подписку"
+    )
 
     class Meta:
         verbose_name = "Подписка пользователя"

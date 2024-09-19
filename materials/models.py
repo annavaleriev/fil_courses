@@ -66,7 +66,9 @@ class Lesson(models.Model):
         help_text="Загрузите превью урока",
     )
     video = models.URLField(
-        verbose_name="Видео урока", help_text="Введите ссылку на видео урока", validators=[validate_admin_youtube_link]
+        verbose_name="Видео урока",
+        help_text="Введите ссылку на видео урока",
+        validators=[validate_admin_youtube_link],
     )
     owner = models.ForeignKey(
         User,
