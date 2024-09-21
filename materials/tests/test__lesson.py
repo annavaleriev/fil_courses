@@ -5,217 +5,187 @@ from materials.tests.fabrics import (
     AdminUserFactory,
     UserFactory,
     ModerGroupFactory,
-    LessonFactory,
+    LessonFactory, CourseFactory,
 )
 
 
-class LessonTestCase(APITestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.lesson_list_url = reverse("materials:lesson-list")
+class LessonTestCase(APITestCase):  # Тесты для уроков
+    def setUp(self):  # Создаем клиент
+        self.client = APIClient()  # Создаем клиент
+        self.lesson_list_url = reverse("materials:lesson-list")  # Получаем url для списка уроков
+
+    def authenticate_user(self, user):
+        self.client.force_authenticate(user=user)
+
+    def create_moder(self):
+        moder_group = ModerGroupFactory()
+        moder = UserFactory()
+        moder.groups.add(moder_group)
+        return moder
+
+    def create_lesson(self, user, course=None, title="Test lesson",
+                      video="https://www.youtube.com/watch?v=8sv-6AN0_cg"):  # Создаем урок
+
+        if course is None:
+            course = CourseFactory()
+        self.authenticate_user(user)  # Логинимся под пользователем
+        response = self.client.post(self.lesson_list_url, data=
+        {  # Отправляем POST запрос на создание урока
+            "title": title,
+            "video": video,
+            "course": course.pk
+        })
+        return response
 
 
-class ListLessonTestCase(LessonTestCase):
-    def test__get_lessons__super_user(self):
-        admin = AdminUserFactory()
-        self.client.force_authenticate(user=admin)
+class ListLessonTestCase(LessonTestCase):  # Тесты для списка уроков
+    def test__get_lessons__super_user(self):  # Получаем уроки для суперпользователя
+        admin = AdminUserFactory()  # Создаем администратора
+        self.authenticate_user(admin)
 
-        lessons = LessonFactory.create_batch(10)
-        response = self.client.get(self.lesson_list_url)
+        lessons = LessonFactory.create_batch(10)  # Создаем 10 уроков
+        response = self.client.get(self.lesson_list_url)  # Отправляем GET запрос на список уроков
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertEqual(len(lessons), response.data["count"])
 
-        lesson_ids = {lesson.pk for lesson in lessons}
-        expected_lesson_ids = {lesson["id"] for lesson in response.data["results"]}
+        lesson_ids = {lesson.pk for lesson in lessons}  # Получаем id уроков
+        expected_lesson_ids = {lesson["id"] for lesson in response.data["results"]}  # Получаем id уроков из ответа
 
-        self.assertSetEqual(lesson_ids, expected_lesson_ids)
+        self.assertSetEqual(lesson_ids, expected_lesson_ids)  # Сравниваем id уроков
 
-    def test__get_lessons__owner_user(self):
+    def test__get_lessons__owner_user(self):  # Получаем уроки для владельца
+        user = UserFactory()  # Создаем пользователя
+        self.authenticate_user(user)  # Логинимся под пользователем
+
+        count_user_owner_lessons = 3  # Количество уроков для пользователя
+
+        LessonFactory.create_batch(2)  # Создаем 2 урока
+        user_owner_lessons = LessonFactory.create_batch(  # Создаем уроки для пользователя
+            count_user_owner_lessons, owner=user  # Создаем уроки для пользователя
+        )
+        response = self.client.get(self.lesson_list_url)  # Отправляем GET запрос на список уроков
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)  # Проверяем что запрос прошел успешно
+
+        self.assertEqual(response.data["count"], count_user_owner_lessons)  # Проверяем количество уроков
+
+        lesson_ids = {lesson.pk for lesson in user_owner_lessons}  # Получаем id уроков
+        expected_lesson_ids = {lesson["id"] for lesson in response.data["results"]}  # Получаем id уроков из ответа
+
+        self.assertSetEqual(lesson_ids, expected_lesson_ids)  # Сравниваем id уроков
+
+    def test__get_lessons__moder_user(self):  # Получаем уроки для модератора
+        moder = self.create_moder()  # Создаем модератора
+
+        user = UserFactory()  # Создаем пользователя
+
+        self.client.force_authenticate(user=moder)  # Логинимся под модератором
+
+        count_user_owner_lessons = 3  # Количество уроков для пользователя
+        count_not_owner_lessons = 2  # Количество уроков не принадлежащих пользователю
+
+        not_owner_lessons = LessonFactory.create_batch(
+            count_not_owner_lessons)  # Создаем уроки не принадлежащие пользователю
+        user_owner_lessons = LessonFactory.create_batch(  # Создаем уроки для пользователя
+            count_user_owner_lessons, owner=user  # Создаем уроки для пользователя
+        )
+        all_lessons = not_owner_lessons + user_owner_lessons  # Все уроки
+
+        response = self.client.get(self.lesson_list_url)  # Отправляем GET запрос на список уроков
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)  # Проверяем что запрос прошел успешно
+
+        self.assertEqual(  # Проверяем количество уроков
+            response.data["count"], count_user_owner_lessons + count_not_owner_lessons  # Проверяем количество уроков
+        )
+
+        lesson_ids = {lesson.pk for lesson in all_lessons}  # Получаем id уроков
+        expected_lesson_ids = {lesson["id"] for lesson in response.data["results"]}  # Получаем id уроков из ответа
+
+        self.assertSetEqual(lesson_ids, expected_lesson_ids)  # Сравниваем id уроков
+
+
+class CreateLessonTestCase(LessonTestCase):  # Тесты для создания уроков
+
+    def test__post_lessons__super_user(self):
+        admin = AdminUserFactory()  # Создаем администратора
+        response = self.create_lesson(admin)
+        # print(response.status_code)
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)  # Проверяем что запрос прошел успешно
+
+    def test__post_lessons__user(self):
         user = UserFactory()
+        response = self.create_lesson(user)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)  # Проверяем что запрос прошел успешно
+
+    def test__post_lessons__moder_user(self):
+        moder = self.create_moder()  # Создаем модератора
+        response = self.create_lesson(moder)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # Проверяем что запрос прошел успешно
+
+
+class UpdateLessonTestCase(LessonTestCase):
+    def update_lesson(self, user, lesson):
         self.client.force_authenticate(user=user)
+        response = self.client.patch(reverse("materials:lesson-detail", args=[lesson.pk]), data={"title": "New title"})
+        return response
 
-        count_user_owner_lessons = 3
-
-        LessonFactory.create_batch(2)
-        user_owner_lessons = LessonFactory.create_batch(
-            count_user_owner_lessons, owner=user
-        )
-        response = self.client.get(self.lesson_list_url)
-
+    def test__patch_lesson__super_user(self):
+        admin = AdminUserFactory()
+        lesson = LessonFactory()
+        response = self.update_lesson(admin, lesson)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(response.data["count"], count_user_owner_lessons)
-
-        lesson_ids = {lesson.pk for lesson in user_owner_lessons}
-        expected_lesson_ids = {lesson["id"] for lesson in response.data["results"]}
-
-        self.assertSetEqual(lesson_ids, expected_lesson_ids)
-
-    def test__get_lessons__moder_user(self):
-        moder_group = ModerGroupFactory()
-        moder = UserFactory()
-        moder.groups.add(moder_group)
-
+    def test__patch_lesson__owner_user(self):
         user = UserFactory()
-
-        self.client.force_authenticate(user=moder)
-
-        count_user_owner_lessons = 3
-        count_not_owner_lessons = 2
-
-        not_owner_lessons = LessonFactory.create_batch(count_not_owner_lessons)
-        user_owner_lessons = LessonFactory.create_batch(
-            count_user_owner_lessons, owner=user
-        )
-        all_lessons = not_owner_lessons + user_owner_lessons
-
-        response = self.client.get(self.lesson_list_url)
-
+        lesson = LessonFactory(owner=user)
+        response = self.update_lesson(user, lesson)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(
-            response.data["count"], count_user_owner_lessons + count_not_owner_lessons
-        )
+    def test__patch_lesson__not_owner_user(self):
+        user = UserFactory()
+        another_user = UserFactory()
+        lesson = LessonFactory(owner=another_user)
+        response = self.update_lesson(user, lesson)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-        lesson_ids = {lesson.pk for lesson in all_lessons}
-        expected_lesson_ids = {lesson["id"] for lesson in response.data["results"]}
+    def test__patch_lesson__moder_user(self):
+        moder = self.create_moder()
+        lesson = LessonFactory()
+        response = self.update_lesson(moder, lesson)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertSetEqual(lesson_ids, expected_lesson_ids)
 
+class DeleteLessonTestCase(LessonTestCase):
 
-class CreateLessonTestCase(LessonTestCase):
-    pass
+    def test__delete_lesson__super_user(self):
+        admin = AdminUserFactory() # Создаем администратора
+        lesson = LessonFactory() # Создаем урок
+        self.authenticate_user(admin) # Логинимся под администратором
+        response = self.client.delete(reverse("materials:lesson-detail", args=[lesson.pk])) # Отправляем DELETE запрос на удаление урока
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT) # Проверяем что запрос прошел успешно
 
-    #     # Создаем пользователей тестовых
-    #     self.admin_user = User.objects.create_superuser(email="admin@admin.com", password="admin")
-    #     self.moder_user = User.objects.create_user(email="moder@moder.com", password="moder")
-    #     self.user = User.objects.create_user(email="user@user.com", password="user")
-    #
-    #     # Создаем курс
-    #     self.course = Course.objects.create(title="Test course", description="Test course", owner=self.admin_user)
-    #
-    #     # Создаем урок
-    #     self.lesson_1 = Lesson.objects.create(title="Test lesson_1", description="Test lesson_1", course=self.course,
-    #                                           video="https://www.youtube.com/watch?v=8sv-6AN0_cg")
-    #     self.lesson_2 = Lesson.objects.create(title="Test lesson_2", description="Test lesson_2", course=self.course,
-    #                                           video="https://www.youtube.com/watch?v=ozFNilK4qrc")
-    #
-    # def test_create_lesson(self):
-    #     self.client.force_authenticate(user=self.admin_user)
-    #
-    #     url = reverse('materials:lesson-list')
-    #
-    #     # Отправляем POST запрос на подписку
-    #     response = self.client.post(url, data={"video": "www.ddddd.ru", "title": "123", "course": self.course.pk})
-    #     self.assertEqual(response.status_code, 400)
-    #
-    #     response = self.client.post(
-    #         url,
-    #         data={
-    #             "video": "https://www.youtube.com/my_home_video/",
-    #             "title": "123",
-    #             "course": self.course.pk
-    #         }
-    #     )
-    #     self.assertEqual(response.status_code, 201)
+    def test__delete_lesson__owner_user(self):
+        user = UserFactory()
+        lesson = LessonFactory(owner=user)
+        self.authenticate_user(user)
+        response = self.client.delete(reverse("materials:lesson-detail", args=[lesson.pk]))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    # self.client.force_authenticate(user=None) - чтобы разлогинится
+    def test__delete_lesson__not_owner_user(self):
+        user = UserFactory()
+        another_user = UserFactory()
+        lesson = LessonFactory(owner=another_user)
+        self.authenticate_user(user)
+        response = self.client.delete(reverse("materials:lesson-detail", args=[lesson.pk]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # view = AccountDetail.as_view()
-    # force_authenticate(request, user=user)
-    # request = factory.post('/notes/', {'title': 'new idea'}, format='json')
-    # response = view(request)
-    #
-    # def test_create_lesson_without_permission(self):
-    #     self.client.force_authenticate(user=self.user)
-    #
-    #     url = reverse('materials:lesson-list')
-    #
-    #     response = self.client.post(
-    #         url,
-    #         data={
-    #             "video": "https://www.youtube.com/my_home_video/",
-    #             "title": "1234",
-    #             "course": self.course.pk
-    #         }
-    #     )
-    #     self.assertEqual(response.status_code, 403)  # 403 - Forbidden
-    #
-    # def test_create_lesson_with_permission(self):
-    #     self.client.force_authenticate(user=self.moder_user)
-    #
-    #     self.assertTrue(
-    #         self.moder_user.groups.filter(name="moders").exists())  # Проверяем что модератор в группе модераторов
-    #
-    #     url = reverse('materials:lesson-list')
-    #
-    #     response = self.client.post(
-    #         url,
-    #         data={
-    #             "video": "https://www.youtube.com/my_home_video/",
-    #             "title": "12345",
-    #             "course": self.course.pk
-    #         }
-    #     )
-    #     self.assertEqual(response.status_code, 403)  # 403 - Forbidden
-    #
-    # def test_update_lesson(self):
-    #     self.client.force_authenticate(user=self.admin_user)  # Логинимся под админом
-    #
-    #     url = reverse('materials:lesson-detail', args=[self.lesson_1.pk])  # Получаем url для обновления урока
-    #
-    #     response = self.client.patch(url, data={"title": "Test lesson_1.1"})  # Отправляем PATCH запрос на обновление
-    #     self.assertEqual(response.status_code, 200)  # Проверяем что запрос прошел успешно
-    #
-    # def test_update_lesson_with_permission(self):
-    #     self.client.force_authenticate(user=self.moder_user)
-    #     self.assertTrue(
-    #         self.moder_user.groups.filter(name="moders").exists())  # Проверяем что модератор в группе модераторов
-    #
-    #     url = reverse('materials:lesson-detail', args=[self.lesson_1.pk])
-    #     pass
-    #
-    # def test_update_lesson_without_permission(self):
-    #     self.client.force_authenticate(user=self.user)
-    #
-    #     url = reverse('materials:lesson-detail', args=[self.lesson_1.pk])
-    #     pass
-    #
-    # def test_delete_lesson(self):
-    #     self.client.force_authenticate(user=self.admin_user)
-    #
-    #     url = reverse('materials:lesson-detail', args=[self.lesson_1.pk])
-    #
-    #     response = self.client.delete(url)
-    #     self.assertEqual(response.status_code, 204) # 204 - No Content - Успешное удаление
-    #
-    # def test_delete_lesson_without_permission(self):
-    #     self.client.force_authenticate(user=self.user) # Логинимся под пользователем
-    #
-    #     url = reverse('materials:lesson-detail', args=[self.lesson_1.pk]) # Получаем url для удаления урока
-    #
-    #     response = self.client.delete(url) # Отправляем DELETE запрос на удаление
-    #     self.assertEqual(response.status_code, 403) # 403 - Forbidden
-    # #
-    # # def test_delete_lesson_with_permission(self):
-    # #     pass
-    # #
-    # # def test_get_lesson(self):
-    # #     pass
-    # #
-    # # def test_get_lesson_without_permission(self):
-    # #     pass
-    # #
-    # # def test_get_lesson_with_permission(self):
-    # #     pass
-    # #
-    # # def test_get_lessons(self):
-    # #     pass
-    # #
-    # # def test_get_lessons_without_permission(self):
-    # #     pass
-    # #
-    # def test_get_lessons_with_permission(self):
-    #     pass
+    def test__delete_lesson__moder_user(self):
+        moder = self.create_moder()
+        lesson = LessonFactory()
+        self.authenticate_user(moder)
+        response = self.client.delete(reverse("materials:lesson-detail", args=[lesson.pk]))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
