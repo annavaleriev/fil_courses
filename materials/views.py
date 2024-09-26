@@ -9,13 +9,13 @@ from materials.models import Course, Lesson
 from materials.paginators import LessonAndCoursePagination
 from materials.serializer import CourseSerializer, LessonSerializer
 from users.models import UserSubscription, MODER_GROUP_NAME
-from users.permissions import IsModer, IsOwner, IsSuperUser
+from users.permissions import IsOwnerSuperUser, NotIsModer
 from users.serializer import UserSubscriptionSerializer
 
 
 class CourseLessonBasePermissionViewSet(viewsets.ModelViewSet):
     # permission_classes = [IsOwner | IsSuperUser]
-    permission_classes = [IsOwner | IsModer | IsSuperUser]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -32,9 +32,9 @@ class CourseLessonBasePermissionViewSet(viewsets.ModelViewSet):
         # elif self.action in ["update", "partial_update", "retrieve", "list"]:
         #     self.permission_classes = [IsOwner | IsModer | IsSuperUser]
         if self.action in ["create"]:
-            self.permission_classes = [IsAuthenticated & ~IsModer]
+            self.permission_classes = [IsAuthenticated, NotIsModer]
         elif self.action in ["destroy"]:
-            self.permission_classes = [IsOwner | IsSuperUser]
+            self.permission_classes = [IsAuthenticated, IsOwnerSuperUser]
         return super().get_permissions()
 
 
@@ -51,7 +51,7 @@ class CourseViewSet(CourseLessonBasePermissionViewSet):
     def subscription(self, request, pk=None):
         user = request.user
 
-        user_subscription = UserSubscription.objects.filter(user=user, course_id=pk)
+        user_subscription = UserSubscription.objects.filter(user=user, course_id=int(pk))
         if user_subscription.exists():
             user_subscription.delete()
             return Response(

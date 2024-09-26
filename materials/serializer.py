@@ -30,7 +30,7 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     @staticmethod
-    def get_lesson_count(obj):
+    def get_lesson_count(obj) -> int:
         return obj.lessons.count()
 
     def get_is_subscribed(self, obj):

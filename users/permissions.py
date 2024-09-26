@@ -3,19 +3,11 @@ from rest_framework import permissions
 from users.models import MODER_GROUP_NAME
 
 
-class IsModer(permissions.BasePermission):
-
+class NotIsModer(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.groups.filter(name=MODER_GROUP_NAME).exists()
+        return not request.user.groups.filter(name=MODER_GROUP_NAME).exists()
 
 
-class IsOwner(permissions.BasePermission):
-
+class IsOwnerSuperUser(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        return request.user == obj.owner
-
-
-class IsSuperUser(permissions.BasePermission):
-
-    def has_object_permission(self, request, view, obj):
-        return request.user.is_superuser
+        return request.user.is_superuser or request.user == obj.owner
