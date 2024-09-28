@@ -1,6 +1,8 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator
 from django.db import models
+from decimal import Decimal
 
 NULLABLE = {"blank": True, "null": True}
 MODER_GROUP_NAME = "moders"
@@ -129,10 +131,34 @@ class Payment(models.Model):
         verbose_name="Оплаченный урок",
     )
 
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Сумма")
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Сумма",
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
 
     payment_method = models.CharField(
         max_length=10, choices=Method.choices, verbose_name="Способ оплаты"
+    )
+
+    stripe_session_id = models.CharField(
+        max_length=250,
+        verbose_name="ID сессии Stripe",
+        help_text="ID сессии Stripe",
+    )
+
+    stripe_payment_url = models.URLField(
+        max_length=500,
+        verbose_name="URL оплаты Stripe",
+        help_text="URL оплаты Stripe",
+    )
+
+    stripe_payment_status = models.CharField(
+        max_length=50,
+        **NULLABLE,
+        verbose_name="Статус оплаты",
+        help_text="Статус платежа в Stripe",
     )
 
     class Meta:
@@ -142,6 +168,15 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Платеж {self.amount} от {self.user.email}"
+
+    def get_payment_status(self):
+        """Метод для получения статуса платежа"""
+        return self.stripe_payment_status
+
+    def update_payment_status(self, new_status):
+        """Метод для обновления статуса платежа"""
+        self.stripe_payment_status = new_status
+        self.save()
 
 
 class UserSubscription(models.Model):

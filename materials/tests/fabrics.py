@@ -1,7 +1,7 @@
 import factory
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from factory.fuzzy import FuzzyText
+from factory.fuzzy import FuzzyText, FuzzyDecimal
 
 from materials.models import Course, Lesson
 from users.models import MODER_GROUP_NAME
@@ -33,6 +33,7 @@ class ModerGroupFactory(factory.django.DjangoModelFactory):
 
 class CourseFactory(factory.django.DjangoModelFactory):
     title = FuzzyText()
+    price = FuzzyDecimal(low=10.00, high=100.00)
 
     class Meta:
         model = Course

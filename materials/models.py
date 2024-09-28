@@ -32,6 +32,20 @@ class Course(models.Model):
         help_text="Укажите владельца курса",
     )
 
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Цена",
+        help_text="Введите цену курса",
+    )
+
+    stripe_product_id = models.CharField(
+        max_length=150,
+        **NULLABLE,
+        verbose_name="ID продукта Stripe",
+        help_text="ID продукта Stripe",
+    )
+
     class Meta:
         verbose_name = "Курс"
         verbose_name_plural = "Курсы"
