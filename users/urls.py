@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.permissions import AllowAny
 from rest_framework.routers import DefaultRouter
 
-from users.views import UserViewSet, PaymentListView, UserCreateView, PaymentStatusView
+from users.views import UserViewSet, PaymentListView, UserCreateView
 from users.apps import UsersConfig
 
 from rest_framework_simplejwt.views import (
@@ -17,10 +17,6 @@ router.register(r"", UserViewSet)
 
 urlpatterns = [
     path("payments/", PaymentListView.as_view(), name="payment-list"),
-    path(
-        "payments/<int:pk>/status/", PaymentStatusView.as_view(), name="payment-status"
-    ),
-    # path("create_payment/<int:course_id>/", create_payment, name="create_payment"), # Создаем платеж
     path(
         "token/",
         TokenObtainPairView.as_view(permission_classes=(AllowAny,)),

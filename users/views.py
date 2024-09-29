@@ -48,25 +48,3 @@ class PaymentListView(generics.ListAPIView):
     filterset_class = PaymentFilter  # Используем фильтры
     ordering_fields = ("payment_date",)  # Сортируем по всем полям
     ordering = ["-payment_date"]  # Сортируем по убыванию даты платежа
-
-
-class PaymentStatusView(generics.RetrieveAPIView):
-    """ViewSet для статуса платежа"""
-
-    queryset = Payment.objects.all()  # Получаем все платежи
-    serializer_class = PaymentSerializer  # Используем сериализатор
-
-    def get(self, request, *args, **kwargs):
-        payment = self.get_object()  # Получаем объект платежа
-
-        try:
-            payment_status = retrieve_stripe_payment_status(
-                payment.stripe_session_id
-            )  # Получаем статус платежа
-            payment.update_payment_status(payment_status)  # Обновляем статус платежа
-        except ValueError as e:
-            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(
-            {"payment_status": payment.get_payment_status()}, status=status.HTTP_200_OK
-        )

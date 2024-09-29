@@ -24,18 +24,6 @@ class PaymentSerializer(serializers.ModelSerializer):
 class PaymentCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для платежей"""
 
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    payment_date = serializers.DateTimeField(read_only=True)
-    paid_course = serializers.PrimaryKeyRelatedField(read_only=True)
-    paid_lesson = serializers.PrimaryKeyRelatedField(read_only=True)
-    payment_method = serializers.ChoiceField(
-        choices=Payment.Method.choices, read_only=True
-    )
-    stripe_payment_url = serializers.URLField(read_only=True)
-    amount = serializers.DecimalField(
-        min_value=Decimal("0.01"), max_digits=10, decimal_places=2, read_only=True
-    )
-
     class Meta:
         model = Payment
         fields = (
@@ -47,6 +35,15 @@ class PaymentCreateSerializer(serializers.ModelSerializer):
             "payment_method",
             "stripe_payment_url",
         )
+        read_only_fields = (
+            'user',
+            "payment_date",
+            'paid_course',
+            "paid_lesson",
+            'payment_method',
+            "stripe_payment_url",
+            "amount",
+        )
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
@@ -55,3 +52,27 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserSubscription
         fields = ("user", "course")
+
+
+class PaymentStatusSerializer(serializers.ModelSerializer):
+    """Сериализатор для статуса платежей"""
+
+    class Meta:
+        model = Payment
+        fields = (
+            "stripe_payment_status",
+        )
+
+
+class PaymentStatusDisplaySerializer(serializers.ModelSerializer):
+    status_display = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_status_display(obj) -> str:
+        return obj.get_stripe_payment_status_display()
+
+    class Meta:
+        model = Payment
+        fields = (
+            "status_display",
+        )

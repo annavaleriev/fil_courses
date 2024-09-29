@@ -35,8 +35,5 @@ def create_stripe_sessions_payment(price_id, success_url, cancel_url):
 def retrieve_stripe_payment_status(stripe_session_id):
     # Получаем статус платежа в Stripe
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    try:
-        session = stripe.checkout.Session.retrieve(stripe_session_id)
-        return session["payment_status"]
-    except stripe.error.StripeError as e:
-        raise ValueError(f"Ошибка при получении статуса платежа: {e}")
+    session = stripe.checkout.Session.retrieve(stripe_session_id)
+    return session

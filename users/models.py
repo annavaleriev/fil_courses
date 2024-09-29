@@ -105,6 +105,11 @@ class User(AbstractUser):
 class Payment(models.Model):
     """Модель для платежей"""
 
+    class PaymentStatus(models.TextChoices):
+        NO_PAYMENT_REQUIRED = "no_payment_required", "Не требуется оплата"
+        PAID = "paid", "Оплачено"
+        UNPAID = "unpaid", "Не оплачено"
+
     class Method(models.TextChoices):
         CASH = "cash", "Наличные"
         CARD = "card", "Перевод на счет"
@@ -156,9 +161,10 @@ class Payment(models.Model):
 
     stripe_payment_status = models.CharField(
         max_length=50,
-        **NULLABLE,
+        choices=PaymentStatus.choices,
         verbose_name="Статус оплаты",
         help_text="Статус платежа в Stripe",
+        **NULLABLE,
     )
 
     class Meta:
@@ -168,10 +174,6 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Платеж {self.amount} от {self.user.email}"
-
-    def get_payment_status(self):
-        """Метод для получения статуса платежа"""
-        return self.stripe_payment_status
 
     def update_payment_status(self, new_status):
         """Метод для обновления статуса платежа"""

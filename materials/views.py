@@ -6,22 +6,23 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from stripe import StripeError
 
 from materials.models import Course, Lesson
 from materials.paginators import LessonAndCoursePagination
 from materials.serializer import CourseSerializer, LessonSerializer
 from users.models import UserSubscription, MODER_GROUP_NAME, Payment
 from users.permissions import IsOwnerSuperUser, NotIsModer
-from users.serializer import UserSubscriptionSerializer, PaymentCreateSerializer
+from users.serializer import UserSubscriptionSerializer, PaymentCreateSerializer, PaymentStatusSerializer, \
+    PaymentStatusDisplaySerializer
 from users.stripe_service import (
     create_stripe_product,
     create_stripe_price,
-    create_stripe_sessions_payment,
+    create_stripe_sessions_payment, retrieve_stripe_payment_status,
 )
 
 
 class CourseLessonBasePermissionViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsOwner | IsSuperUser]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -34,10 +35,6 @@ class CourseLessonBasePermissionViewSet(viewsets.ModelViewSet):
         return queryset.filter(owner=self.request.user)
 
     def get_permissions(self):
-        # if self.action in ["create"]:
-        #     self.permission_classes = [IsAuthenticated & ~IsModer]
-        # elif self.action in ["update", "partial_update", "retrieve", "list"]:
-        #     self.permission_classes = [IsOwner | IsModer | IsSuperUser]
         if self.action in ["create"]:
             self.permission_classes = [IsAuthenticated, NotIsModer]
         elif self.action in ["destroy"]:
@@ -49,6 +46,10 @@ class CourseViewSet(CourseLessonBasePermissionViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
     pagination_class = LessonAndCoursePagination
+
+    # def update(self, request, *args, **kwargs):
+    #     ######
+    #     pass
 
     @action(
         detail=True,
@@ -88,33 +89,48 @@ class CourseViewSet(CourseLessonBasePermissionViewSet):
         price = create_stripe_price(product.id, float(course.price))
         session = create_stripe_sessions_payment(price.id, success_url, cancel_url)
 
-        request.data.update(
-            {
-                "user": request.user,
-                "paid_course": pk,
-                "amount": float(course.price),
-                "stripe_session_id": session.id,
-                "payment_method": Payment.Method.CARD,
-                "stripe_payment_url": session.url,
-            }
-        )
+        data = {
+            "user": request.user,
+            "paid_course": course,
+            "amount": float(course.price),
+            "stripe_session_id": session.id,
+            "payment_method": Payment.Method.CARD,
+            "stripe_payment_url": session.url,
+        }
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        Payment.objects.get_or_create(
-            user=request.user,
-            paid_course=course,
-            amount=float(course.price),
-            payment_method=Payment.Method.CARD,
-            stripe_session_id=session.id,
-            stripe_payment_url=session.url,
-        )
+        Payment.objects.get_or_create(**data)
         headers = self.get_success_headers(serializer.data)
         return Response(
             {"url": session.url}, status=status.HTTP_201_CREATED, headers=headers
         )
 
-        # return self.create(request.data)
+    @action(
+        detail=True,
+        methods=[HTTPMethod.GET],
+        serializer_class=PaymentStatusDisplaySerializer,
+    )
+    def payment_status(self, request, pk=None):
+        course = get_object_or_404(Course, pk=pk)
+        payment = course.payment_set.filter(paid_course=course, user=request.user).first()
+
+        if not payment:
+            return Response({"status_display": Payment.PaymentStatus.UNPAID.label})
+        try:
+            session = retrieve_stripe_payment_status(
+                payment.stripe_session_id
+            )  # Получаем статус платежа
+        except StripeError as e:
+            return Response({"message": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        payment_status = session.payment_status
+        serializer = PaymentStatusSerializer(data={"stripe_payment_status": payment_status})
+        serializer.is_valid(raise_exception=True)
+
+        payment.update_payment_status(payment_status)  # Обновляем статус платежа
+        model_serializer = self.get_serializer(payment)
+        return Response(model_serializer.data)
 
 
 class LessonViewSet(CourseLessonBasePermissionViewSet):
