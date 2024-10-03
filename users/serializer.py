@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from decimal import Decimal
+
 from materials.serializer import CourseSerializer, LessonSerializer
 from users.models import User, Payment, UserSubscription
 
@@ -36,11 +36,11 @@ class PaymentCreateSerializer(serializers.ModelSerializer):
             "stripe_payment_url",
         )
         read_only_fields = (
-            'user',
+            "user",
             "payment_date",
-            'paid_course',
+            "paid_course",
             "paid_lesson",
-            'payment_method',
+            "payment_method",
             "stripe_payment_url",
             "amount",
         )
@@ -51,7 +51,7 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserSubscription
-        fields = ("user", "course")
+        fields = ("user",)
 
 
 class PaymentStatusSerializer(serializers.ModelSerializer):
@@ -59,9 +59,7 @@ class PaymentStatusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = (
-            "stripe_payment_status",
-        )
+        fields = ("stripe_payment_status",)
 
 
 class PaymentStatusDisplaySerializer(serializers.ModelSerializer):
@@ -73,6 +71,4 @@ class PaymentStatusDisplaySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = (
-            "status_display",
-        )
+        fields = ("status_display",)

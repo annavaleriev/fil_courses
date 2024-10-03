@@ -14,25 +14,18 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-lty51u4$0z)od^5p8^k-y&x-8x963g6m=5^6fmq_dcjm#l_^au"
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "True"
 
 ALLOWED_HOSTS = ["*"]
-
-# Application definition
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -54,7 +47,6 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
-    # 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -100,9 +92,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -113,13 +102,6 @@ DATABASES = {
         "HOST": os.getenv("DATABASE_HOST"),
     }
 }
-
-# print("DATABASE_PASSWORD:", os.getenv("DATABASE_PASSWORD"))
-# print("DATABASE_PORT:", os.getenv("DATABASE_PORT"))
-# print("DATABASE_HOST:", os.getenv("DATABASE_HOST"))
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -136,9 +118,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = "ru-ru"
 
 TIME_ZONE = "UTC"
@@ -147,14 +126,8 @@ USE_I18N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -171,20 +144,16 @@ CORS_ALLOW_ALL_ORIGINS = False
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
 
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = "smtp.yandex.ru"
-# EMAIL_PORT = 465
-#
-# EMAIL_HOST_USER = os.getenv("EMAIL_USER")
-# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
-# EMAIL_USE_SSL = True
-#
-# SERVER_EMAIL = EMAIL_HOST_USER
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-#
-# LOGIN_REDIRECT_URL = reverse_lazy("services:home")
-# LOGOUT_REDIRECT_URL = reverse_lazy("user:login")
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.yandex.ru"
+EMAIL_PORT = 465
 
+EMAIL_HOST_USER = os.getenv("EMAIL_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
+EMAIL_USE_SSL = True
+
+SERVER_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Anna API",  # название проекта
@@ -197,29 +166,38 @@ SPECTACULAR_SETTINGS = {
 }
 
 # URL-адрес брокера сообщений
-CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 
 # URL-адрес брокера результатов, также Redis
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
 
 # Часовой пояс для работы Celery
 CELERY_TIMEZONE = "Europe/Moscow"
 
 # Флаг отслеживания выполнения задач
 CELERY_TASK_TRACK_STARTED = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_CONNECTION_MAX_RETRIES = None
 
 # Указываем форматы для сериализации данных (опционально)
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 
 # Использовать Django Celery Beat Scheduler
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 
 # Максимальное время на выполнение задачи
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
 CELERY_IMPORTS = (
-    'materials.tasks',
-    'users.tasks',
+    "materials.tasks",
+    "users.tasks",
 )
+
+CELERY_BEAT_SCHEDULE = {
+    "deactivate_users": {
+        "task": "users.tasks.deactivate_users",
+        "schedule": crontab(minute="0", hour="0", day_of_week="5"),
+    }
+}

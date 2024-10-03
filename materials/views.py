@@ -1,11 +1,14 @@
 from http import HTTPMethod
 
+from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from stripe import StripeError
 
 from materials.models import Course, Lesson
@@ -13,13 +16,19 @@ from materials.paginators import LessonAndCoursePagination
 from materials.serializer import CourseSerializer, LessonSerializer
 from users.models import UserSubscription, MODER_GROUP_NAME, Payment
 from users.permissions import IsOwnerSuperUser, NotIsModer
-from users.serializer import UserSubscriptionSerializer, PaymentCreateSerializer, PaymentStatusSerializer, \
-    PaymentStatusDisplaySerializer
+from users.serializer import (
+    UserSubscriptionSerializer,
+    PaymentCreateSerializer,
+    PaymentStatusSerializer,
+    PaymentStatusDisplaySerializer,
+)
 from users.stripe_service import (
     create_stripe_product,
     create_stripe_price,
-    create_stripe_sessions_payment, retrieve_stripe_payment_status,
+    create_stripe_sessions_payment,
+    retrieve_stripe_payment_status,
 )
+from .tasks import send_course_update_email
 
 
 class CourseLessonBasePermissionViewSet(viewsets.ModelViewSet):
@@ -32,7 +41,12 @@ class CourseLessonBasePermissionViewSet(viewsets.ModelViewSet):
             or self.request.user.groups.filter(name=MODER_GROUP_NAME).exists()
         ):
             return queryset
-        return queryset.filter(owner=self.request.user)
+        course_subscriptions = UserSubscription.objects.filter(
+            user=self.request.user
+        ).values_list("course_id", flat=True)
+        return queryset.filter(
+            Q(owner=self.request.user) | Q(pk__in=course_subscriptions)
+        )
 
     def get_permissions(self):
         if self.action in ["create"]:
@@ -47,9 +61,28 @@ class CourseViewSet(CourseLessonBasePermissionViewSet):
     queryset = Course.objects.all()
     pagination_class = LessonAndCoursePagination
 
-    # def update(self, request, *args, **kwargs):
-    #     ######
-    #     pass
+    def update(self, request, *args, **kwargs):
+        course = self.get_object()
+        current_time = timezone.now()
+
+        serializer = self.get_serializer(course, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        update_timedelta = current_time - course.last_update
+        update_timedelta_hours = update_timedelta.total_seconds() // 3600
+        if update_timedelta_hours >= 4:
+            subscribers = UserSubscription.objects.filter(course=course)
+
+            for subscriber in subscribers:
+                user_email = subscriber.user.email
+                host = f"http://{request.get_host()}"
+                course_url = host + reverse(
+                    "materials:course-detail", kwargs={"pk": course.id}
+                )
+                send_course_update_email.delay(user_email, course.title, course_url)
+
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=True,
@@ -68,11 +101,14 @@ class CourseViewSet(CourseLessonBasePermissionViewSet):
                 data={"message": "подписка удалена"}, status=status.HTTP_204_NO_CONTENT
             )
 
-        request.data.update({"course": pk})
-        response = self.create(request)
-        if response.status_code == status.HTTP_201_CREATED:
-            response.data = {"message": "подписка добавлена"}
-        return response
+        course = get_object_or_404(Course, pk=pk)
+        UserSubscription.objects.create(
+            user=user,
+            course=course,
+        )
+        return Response(
+            data={"message": "подписка добавлена"}, status=status.HTTP_201_CREATED
+        )
 
     @action(
         detail=True,
@@ -113,7 +149,9 @@ class CourseViewSet(CourseLessonBasePermissionViewSet):
     )
     def payment_status(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
-        payment = course.payment_set.filter(paid_course=course, user=request.user).first()
+        payment = course.payment_set.filter(
+            paid_course=course, user=request.user
+        ).first()
 
         if not payment:
             return Response({"status_display": Payment.PaymentStatus.UNPAID.label})
@@ -122,10 +160,14 @@ class CourseViewSet(CourseLessonBasePermissionViewSet):
                 payment.stripe_session_id
             )  # Получаем статус платежа
         except StripeError as e:
-            return Response({"message": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {"message": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
         payment_status = session.payment_status
-        serializer = PaymentStatusSerializer(data={"stripe_payment_status": payment_status})
+        serializer = PaymentStatusSerializer(
+            data={"stripe_payment_status": payment_status}
+        )
         serializer.is_valid(raise_exception=True)
 
         payment.update_payment_status(payment_status)  # Обновляем статус платежа

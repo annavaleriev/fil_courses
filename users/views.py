@@ -1,14 +1,13 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, generics, status
+from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter, SearchFilter
 
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
+
 
 from users.filters import PaymentFilter
 from users.models import User, Payment
 from users.serializer import UserSerializer, PaymentSerializer
-from users.stripe_service import retrieve_stripe_payment_status
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):  # Создаем ViewSet для пользователей
