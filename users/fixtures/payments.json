@@ -1,0 +1,32 @@
+[
+{
+  "model": "users.payment",
+  "pk": 12,
+  "fields": {
+    "user": 1,
+    "payment_date": "2024-09-26T16:55:22.438Z",
+    "paid_course": 12,
+    "paid_lesson": null,
+    "amount": "20000.00",
+    "payment_method": "card",
+    "stripe_session_id": "cs_test_a1YkHl6iYz5yZiKKWbJaNX6kAIKMFd8RZgQ4w5j5ia0A5pz3HSNPveX1lG",
+    "stripe_payment_url": "https://checkout.stripe.com/c/pay/cs_test_a1YkHl6iYz5yZiKKWbJaNX6kAIKMFd8RZgQ4w5j5ia0A5pz3HSNPveX1lG#fidkdWxOYHwnPyd1blpxYHZxWjA0VDR1TlU3SG1Nbmxhbz1idTZna0d9XzZ%2FQ25pcUdCPHd9fH9dTUpJNGAzaERnPFBmSGQ1YmQ3XWpUT3JDTmpyNkJJf0RHYlc1NnFsT3MxQFd8SExQNWZGNTV0TWlgTW5ANycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl",
+    "stripe_payment_status": "unpaid"
+  }
+},
+{
+  "model": "users.payment",
+  "pk": 13,
+  "fields": {
+    "user": 1,
+    "payment_date": "2024-09-26T16:56:50.374Z",
+    "paid_course": 12,
+    "paid_lesson": null,
+    "amount": "20000.00",
+    "payment_method": "card",
+    "stripe_session_id": "cs_test_a1jdYuEQNPleRBTXwJEovLFGLDqKD1br8Q9VxQhuvTKY5Nj9AOAilKEMoW",
+    "stripe_payment_url": "https://checkout.stripe.com/c/pay/cs_test_a1jdYuEQNPleRBTXwJEovLFGLDqKD1br8Q9VxQhuvTKY5Nj9AOAilKEMoW#fidkdWxOYHwnPyd1blpxYHZxWjA0VDR1TlU3SG1Nbmxhbz1idTZna0d9XzZ%2FQ25pcUdCPHd9fH9dTUpJNGAzaERnPFBmSGQ1YmQ3XWpUT3JDTmpyNkJJf0RHYlc1NnFsT3MxQFd8SExQNWZGNTV0TWlgTW5ANycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl",
+    "stripe_payment_status": "paid"
+  }
+}
+]
