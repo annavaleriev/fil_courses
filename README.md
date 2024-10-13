@@ -22,3 +22,38 @@ Stripe предоставляет тестовые ключи, которые м
 
 Используйте эту команду для Windows
 celery -A config worker -P eventlet --loglevel=debug
+
+Запуск через docker-compose
+
+
+Заполнить файл .env с переменными окружения
+
+Выполнить  docker compose up -d --build
+Сервис будет доступен по адресу: http://0.0.0.0:8000/
+
+
+Установка и использование (локально)
+Для работы программы необходимо: установить зависимости, указанные в файле pyproject.toml:
+для первичной установки: poetry install
+
+создать файл .env с параметрами доступа к базе данных PostgresSQL и запуска сервера django. Пример содержимого файла:
+POSTGRES_USER=your_user
+DATABASE_PASSWORD=your password
+POSTGRES_DB=postgres
+
+
+EMAIL_USER=your e-mail
+EMAIL_PASSWORD=your password
+
+DEBUG=True
+
+STRIPE_SECRET_KEY=your key
+STRIPE_PUBLIC_KEY=your key
+
+
+выполнить миграции командой  python manage.py migrate
+
+
+запустить сервер: python manage.py runserver
+
+Создание суперпользователя:  python manage.py createsuperuser
