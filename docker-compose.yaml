@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+  app:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - celery
+
+  db:
+    image: postgres
+    env_file:
+      - .env
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    command: celery -A config worker -P eventlet --loglevel=info
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+volumes:
+  postgres:
+

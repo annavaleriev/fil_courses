@@ -95,11 +95,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "fil_courses",
-        "USER": "postgres",
-        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
-        "PORT": os.getenv("DATABASE_PORT"),
-        "HOST": os.getenv("DATABASE_HOST"),
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "PORT": 5432,
+        "HOST": "db",
     }
 }
 
@@ -166,10 +166,10 @@ SPECTACULAR_SETTINGS = {
 }
 
 # URL-адрес брокера сообщений
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_BROKER_URL = "redis://redis:6379/0"
 
 # URL-адрес брокера результатов, также Redis
-CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 
 # Часовой пояс для работы Celery
 CELERY_TIMEZONE = "Europe/Moscow"
@@ -201,3 +201,4 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute="0", hour="0", day_of_week="5"),
     }
 }
+

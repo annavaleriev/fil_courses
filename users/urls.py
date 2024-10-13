@@ -24,5 +24,4 @@ urlpatterns = [
     ),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("register/", UserCreateView.as_view(), name="register"),
-    # path("subscription/<int:course_id>/", SubscriptionView.as_view(), name="subscription"),
 ] + router.urls
