@@ -18,7 +18,4 @@ RUN python -m pip install --no-cache-dir poetry==1.8.3 \
 COPY . .
 
 #Миграции и запуск сервера
-CMD ["sh", "-c",
-    "python manage.py migrate && \
-     python manage.py runserver 0.0.0.0:8000"
-]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
