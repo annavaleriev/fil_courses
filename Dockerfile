@@ -13,6 +13,7 @@ RUN python -m pip install --no-cache-dir poetry==1.8.3 \
     && poetry install --no-dev --no-interaction --no-ansi \
     && rm -rf $(poetry config cache-dir)/{cache,artifacts}
 
+
 #Копируеем все файлы проекта другие
 COPY . .
 
