@@ -28,11 +28,11 @@ celery -A config worker -P eventlet --loglevel=debug
 
 Заполнить файл .env с переменными окружения
 
-Выполнить  docker compose up -d --build
+Выполнить: docker compose up -d --build
 Сервис будет доступен по адресу: http://0.0.0.0:8000/
 
 
-Установка и использование (локально)
+Установка и использование
 Для работы программы необходимо: установить зависимости, указанные в файле pyproject.toml:
 для первичной установки: poetry install
 
@@ -51,9 +51,9 @@ STRIPE_SECRET_KEY=your key
 STRIPE_PUBLIC_KEY=your key
 
 
-выполнить миграции командой  python manage.py migrate
+выполнить миграции:  python manage.py migrate
 
 
-запустить сервер: python manage.py runserver
+запустить сервер:  python manage.py runserver
 
 Создание суперпользователя:  python manage.py createsuperuser
